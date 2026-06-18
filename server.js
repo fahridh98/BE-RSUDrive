@@ -14,7 +14,7 @@ async function startServer() {
     console.log("Database Connected");
 
     await sequelize.sync({
-      force: true,
+      alter: true,
     });
     await createAdmin();
 
