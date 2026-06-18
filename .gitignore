@@ -4,3 +4,5 @@ testRoutes.js
 createAdmin.js
 credentials
 testController.js
+generateToken.js
+getRefreshToken.js

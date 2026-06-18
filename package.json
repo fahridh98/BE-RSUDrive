@@ -21,7 +21,7 @@
     "googleapis": "^173.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
-    "multer": "^2.1.1",
+    "multer": "^2.2.0",
     "mysql2": "^3.22.5",
     "sequelize": "^6.37.8"
   },

@@ -1,0 +1,25 @@
+const router =
+require("express").Router();
+
+const authMiddleware =
+require("../middlewares/authMiddleware");
+
+const upload =
+require("../middlewares/uploadMiddleware");
+
+const documentController =
+require("../controllers/documentController");
+
+router.post(
+
+    "/upload",
+
+    authMiddleware,
+
+    upload.single("file"),
+
+    documentController.uploadDocument
+
+);
+
+module.exports = router;
