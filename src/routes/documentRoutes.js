@@ -22,4 +22,16 @@ router.post(
 
 );
 
+router.get(
+    "/my-documents",
+    authMiddleware,
+    documentController.getMyDocuments
+);
+
+router.put(
+    "/:id/share",
+    authMiddleware,
+    documentController.shareDocument
+);
+
 module.exports = router;
