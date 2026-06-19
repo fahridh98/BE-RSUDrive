@@ -1,5 +1,6 @@
 const driveService =
 require("../services/driveService");
+const { Op } = require("sequelize");
 
 const {
     User,
@@ -184,6 +185,160 @@ async (req, res) => {
 
             message:
                 "Visibility updated"
+
+        });
+
+    } catch (error) {
+
+        return res.status(500)
+            .json({
+
+                success: false,
+
+                message:
+                    error.message
+
+            });
+
+    }
+
+};
+
+exports.sharedWithMe =
+async (req, res) => {
+
+    try {
+
+        const user =
+            await User.findByPk(
+                req.user.id
+            );
+
+        const documents =
+            await Document.findAll({
+
+                include: [
+                    {
+                        model: User,
+                        attributes: [
+                            "id",
+                            "name",
+                            "role"
+                        ]
+                    }
+                ],
+
+                where: {
+
+                    user_id: {
+                        [Op.ne]:
+                        req.user.id
+                    },
+
+                    [Op.or]: [
+
+                        {
+                            visibility:
+                            "Public"
+                        },
+
+                        {
+                            visibility:
+                            "Role"
+                        }
+
+                    ]
+
+                }
+
+            });
+
+        const filtered =
+            documents.filter(doc => {
+
+                if (
+                    doc.visibility ===
+                    "Public"
+                ) {
+                    return true;
+                }
+
+                return (
+                    doc.user.role ===
+                    user.role
+                );
+
+            });
+
+        return res.json({
+
+            success: true,
+
+            data: filtered
+
+        });
+
+    } catch (error) {
+
+        return res.status(500)
+            .json({
+
+                success: false,
+
+                message:
+                    error.message
+
+            });
+
+    }
+
+};
+
+exports.deleteDocument =
+async (req, res) => {
+
+    try {
+
+        const document =
+            await Document.findByPk(
+                req.params.id
+            );
+
+        if (!document) {
+
+            return res.status(404)
+                .json({
+
+                    success: false
+
+                });
+
+        }
+
+        if (
+            document.user_id !==
+            req.user.id
+        ) {
+
+            return res.status(403)
+                .json({
+
+                    success: false
+
+                });
+
+        }
+
+        await driveService
+            .deleteFile(
+                document.drive_file_id
+            );
+
+        await document.destroy();
+
+        return res.json({
+
+            success: true
 
         });
 

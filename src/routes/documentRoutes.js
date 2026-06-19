@@ -34,4 +34,16 @@ router.put(
     documentController.shareDocument
 );
 
+router.get(
+    "/shared-with-me",
+    authMiddleware,
+    documentController.sharedWithMe
+);
+
+router.delete(
+    "/:id",
+    authMiddleware,
+    documentController.deleteDocument
+);
+
 module.exports = router;

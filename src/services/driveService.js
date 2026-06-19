@@ -141,3 +141,14 @@ async (
 
     return response.data;
 };
+
+exports.deleteFile =
+async (fileId) => {
+
+    await drive.files.delete({
+
+        fileId
+
+    });
+
+};
