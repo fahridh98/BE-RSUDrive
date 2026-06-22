@@ -19,6 +19,13 @@ exports.login = async (req, res) => {
             });
         }
 
+        if (!user.is_active) {
+            return res.status(403).json({
+                success: false,
+                message: "User is inactive"
+            });
+        }
+
         const validPassword =
             await bcrypt.compare(
                 password,
@@ -54,4 +61,32 @@ exports.login = async (req, res) => {
 
     }
 
+};
+
+exports.me = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id, {
+            attributes: {
+                exclude: ["password"]
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            data: user
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 };
