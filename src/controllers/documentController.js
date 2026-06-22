@@ -1,7 +1,6 @@
 const driveService =
 require("../services/driveService");
 const { Op } = require("sequelize");
-
 const {
     User,
     Document
@@ -356,4 +355,123 @@ async (req, res) => {
 
     }
 
+};
+
+exports.viewDocument = async (req, res) => {
+    try {
+        const document = await Document.findByPk(req.params.id, {
+            include: [
+                {
+                    model: User,
+                    attributes: ["id", "name", "role"]
+                }
+            ]
+        });
+
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                message: "Document not found"
+            });
+        }
+
+        // 1. Jika pemilik file
+        if (document.user_id === req.user.id) {
+            return res.json({
+                success: true,
+                data: {
+                    id: document.id,
+                    file_name: document.file_name,
+                    web_view_link: document.web_view_link,
+                    visibility: document.visibility
+                }
+            });
+        }
+
+        // Ambil user login
+        const currentUser = await User.findByPk(req.user.id);
+
+        // 2. Public
+        if (document.visibility === "Public") {
+            return res.json({
+                success: true,
+                data: {
+                    id: document.id,
+                    file_name: document.file_name,
+                    web_view_link: document.web_view_link,
+                    visibility: document.visibility
+                }
+            });
+        }
+
+        // 3. Role
+        if (
+            document.visibility === "Role" &&
+            document.user.role === currentUser.role
+        ) {
+            return res.json({
+                success: true,
+                data: {
+                    id: document.id,
+                    file_name: document.file_name,
+                    web_view_link: document.web_view_link,
+                    visibility: document.visibility
+                }
+            });
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: "You do not have access to this document"
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+exports.renameDocument = async (req, res) => {
+    try {
+        const { file_name } = req.body;
+
+        const document = await Document.findByPk(req.params.id);
+
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                message: "Document not found"
+            });
+        }
+
+        if (document.user_id !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden"
+            });
+        }
+
+        await driveService.renameFile(
+            document.drive_file_id,
+            file_name
+        );
+
+        await document.update({
+            file_name
+        });
+
+        return res.json({
+            success: true,
+            message: "Document renamed successfully",
+            data: document
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 };

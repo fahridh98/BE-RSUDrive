@@ -152,3 +152,15 @@ async (fileId) => {
     });
 
 };
+
+exports.renameFile = async (fileId, newName) => {
+    const response = await drive.files.update({
+        fileId,
+        requestBody: {
+            name: newName
+        },
+        fields: "id,name"
+    });
+
+    return response.data;
+};

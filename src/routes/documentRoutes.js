@@ -46,4 +46,16 @@ router.delete(
     documentController.deleteDocument
 );
 
+router.get(
+    "/:id/view",
+    authMiddleware,
+    documentController.viewDocument
+);
+
+router.put(
+    "/:id/rename",
+    authMiddleware,
+    documentController.renameDocument
+);
+
 module.exports = router;
