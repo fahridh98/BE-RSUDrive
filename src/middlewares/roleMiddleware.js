@@ -27,3 +27,19 @@ module.exports = (allowedRoles = []) => {
     };
 
 };
+
+const AppError = require("../utils/appError");
+
+module.exports = (allowedRoles = []) => {
+    return (req, res, next) => {
+        try {
+            if (!allowedRoles.includes(req.user.role)) {
+                return next(new AppError("Access denied", 403));
+            }
+
+            next();
+        } catch (error) {
+            next(error);
+        }
+    };
+};

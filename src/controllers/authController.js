@@ -2,11 +2,11 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const { User } = require("../models");
+const AppError = require("../utils/appError");
+const { successResponse } = require("../utils/response");
 
-exports.login = async (req, res) => {
-
+exports.login = async (req, res, next) => {
     try {
-
         const { name, password } = req.body;
 
         const user = await User.findOne({
@@ -14,28 +14,20 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(401).json({
-                message: "User not found"
-            });
+            return next(new AppError("User not found", 401));
         }
 
         if (!user.is_active) {
-            return res.status(403).json({
-                success: false,
-                message: "User is inactive"
-            });
+            return next(new AppError("User is inactive", 403));
         }
 
-        const validPassword =
-            await bcrypt.compare(
-                password,
-                user.password
-            );
+        const validPassword = await bcrypt.compare(
+            password,
+            user.password
+        );
 
         if (!validPassword) {
-            return res.status(401).json({
-                message: "Wrong password"
-            });
+            return next(new AppError("Wrong password", 401));
         }
 
         const token = jwt.sign(
@@ -49,21 +41,19 @@ exports.login = async (req, res) => {
             }
         );
 
-        res.json({
-            token
-        });
+        return successResponse(
+            res,
+            "Login successful",
+            { token },
+            200
+        );
 
     } catch (error) {
-
-        res.status(500).json({
-            message: error.message
-        });
-
+        next(error);
     }
-
 };
 
-exports.me = async (req, res) => {
+exports.me = async (req, res, next) => {
     try {
         const user = await User.findByPk(req.user.id, {
             attributes: {
@@ -72,21 +62,16 @@ exports.me = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
+            return next(new AppError("User not found", 404));
         }
 
-        return res.json({
-            success: true,
-            data: user
-        });
+        return successResponse(
+            res,
+            "Profile fetched successfully",
+            user
+        );
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        next(error);
     }
 };

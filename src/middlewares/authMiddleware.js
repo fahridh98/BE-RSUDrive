@@ -1,41 +1,30 @@
 const jwt = require("jsonwebtoken");
+const AppError = require("../utils/appError");
 
-module.exports = (
-    req,
-    res,
-    next
-) => {
-
+module.exports = (req, res, next) => {
     try {
-
-        const authHeader =
-            req.headers.authorization;
+        const authHeader = req.headers.authorization;
 
         if (!authHeader) {
-            return res.status(401).json({
-                message: "Token required"
-            });
+            return next(new AppError("Token required", 401));
         }
 
-        const token =
-            authHeader.split(" ")[1];
+        const token = authHeader.split(" ")[1];
 
-        const decoded =
-            jwt.verify(
-                token,
-                process.env.JWT_SECRET
-            );
+        if (!token) {
+            return next(new AppError("Invalid token format", 401));
+        }
+
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
 
         req.user = decoded;
 
         next();
 
-    } catch {
-
-        return res.status(401).json({
-            message: "Invalid token"
-        });
-
+    } catch (error) {
+        next(error);
     }
-
 };

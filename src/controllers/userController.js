@@ -2,7 +2,10 @@ const bcrypt = require("bcrypt");
 const { User } = require("../models");
 const driveService = require("../services/driveService");
 
-exports.createUser = async (req, res) => {
+const AppError = require("../utils/appError");
+const { successResponse } = require("../utils/response");
+
+exports.createUser = async (req, res, next) => {
   try {
     const { name, password, role } = req.body;
 
@@ -11,10 +14,7 @@ exports.createUser = async (req, res) => {
     });
 
     if (exist) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
+      return next(new AppError("User already exists", 400));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -28,31 +28,29 @@ exports.createUser = async (req, res) => {
     const folderId = await driveService.createUserFolder(
       user.id,
       user.name,
-      user.role,
+      user.role
     );
 
     await user.update({
       folder_id: folderId,
     });
-    
-    return res.status(201).json({
-      success: true,
 
-      data: {
+    return successResponse(
+      res,
+      "User created successfully",
+      {
         id: user.id,
         name: user.name,
         role: user.role,
       },
-    });
+      201
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-exports.getUsers = async (req, res) => {
+exports.getUsers = async (req, res, next) => {
   try {
     const users = await User.findAll({
       attributes: {
@@ -60,19 +58,18 @@ exports.getUsers = async (req, res) => {
       },
     });
 
-    return res.json({
-      success: true,
-      data: users,
-    });
+    return successResponse(
+      res,
+      "Users fetched successfully",
+      users,
+      200
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-exports.getUserById = async (req, res) => {
+exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id, {
       attributes: {
@@ -81,33 +78,26 @@ exports.getUserById = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return next(new AppError("User not found", 404));
     }
 
-    return res.json({
-      success: true,
-      data: user,
-    });
+    return successResponse(
+      res,
+      "User fetched successfully",
+      user,
+      200
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-exports.updateUser = async (req, res) => {
+exports.updateUser = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return next(new AppError("User not found", 404));
     }
 
     const { name, role, is_active } = req.body;
@@ -118,29 +108,25 @@ exports.updateUser = async (req, res) => {
       is_active,
     });
 
-    return res.json({
-      success: true,
-      message: "User updated",
-    });
+    return successResponse(
+      res,
+      "User updated successfully",
+      null,
+      200
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-exports.resetPassword = async (req, res) => {
+exports.resetPassword = async (req, res, next) => {
   try {
     const { password } = req.body;
 
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return next(new AppError("User not found", 404));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -149,41 +135,36 @@ exports.resetPassword = async (req, res) => {
       password: hashedPassword,
     });
 
-    return res.json({
-      success: true,
-      message: "Password reset",
-    });
+    return successResponse(
+      res,
+      "Password reset successfully",
+      null,
+      200
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-exports.deactivateUser = async (req, res) => {
+exports.deactivateUser = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return next(new AppError("User not found", 404));
     }
 
     await user.update({
       is_active: false,
     });
 
-    return res.json({
-      success: true,
-      message: "User deactivated",
-    });
+    return successResponse(
+      res,
+      "User deactivated successfully",
+      null,
+      200
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
